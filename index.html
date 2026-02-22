@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Revision Evaluations</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .test-section { background: white; margin: 20px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #333; margin-top: 0; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .output { background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>JS Revision Evaluations - Test Runner</h1>
+    
+    <div class="test-section">
+        <h2>Q1: Bank Account</h2>
+        <button onclick="testBankAccount()">Test Bank Account</button>
+        <div id="bank-output" class="output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Q2: Rate Limiter</h2>
+        <button onclick="testRateLimiter()">Test Rate Limiter</button>
+        <div id="rate-output" class="output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Q3: Custom SetInterval</h2>
+        <button onclick="testSetInterval()">Test SetInterval</button>
+        <button onclick="stopSetInterval()">Stop Interval</button>
+        <div id="interval-output" class="output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Q4: Task Runner</h2>
+        <button onclick="testTaskRunner()">Test Task Runner</button>
+        <div id="task-output" class="output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Q5: Countdown Timer</h2>
+        <button onclick="testCountdown()">Start Countdown</button>
+        <button onclick="pauseCountdown()">Pause</button>
+        <button onclick="resumeCountdown()">Resume</button>
+        <div id="countdown-output" class="output"></div>
+    </div>
+
+    <script src="BankAccount.js"></script>
+    <script src="RateLimiter.js"></script>
+    <script src="SetInterval.js"></script>
+    <script src="TaskRunner.js"></script>
+    <script src="CountDown.js"></script>
+    
+    <script>
+        // Q1 Test
+        function testBankAccount() {
+            const output = document.getElementById('bank-output');
+            output.innerHTML = '';
+            
+            const account = createBankAccount();
+            
+            function log(message) {
+                output.innerHTML += message + '<br>';
+            }
+            
+            log('Creating bank account...');
+            log(account.deposit(100));
+            log(account.deposit(50));
+            log(account.withdraw(30));
+            log(account.withdraw(200)); // Should fail
+            log(`Current balance: $${account.getBalance()}`);
+            log('Transaction history:');
+            account.getTransactionHistory().forEach(t => {
+                log(`  ${t.type}: $${t.amount} (balance: $${t.balanceAfter})`);
+            });
+        }
+        
+        // Q2 Test
+        let globalLimiter;
+        function testRateLimiter() {
+            const output = document.getElementById('rate-output');
+            output.innerHTML = '';
+            
+            function log(message) {
+                output.innerHTML += message + '<br>';
+            }
+            
+            log('Creating rate limiter: 3 calls per 5 seconds');
+            globalLimiter = createRateLimiter(3, 5000);
+            
+            function testFunction(x) {
+                return `Executed with: ${x}`;
+            }
+            
+            for (let i = 0; i < 5; i++) {
+                const result = globalLimiter(testFunction, `Call ${i+1}`);
+                log(`Call ${i+1}: ${JSON.stringify(result)}`);
+            }
+        }
+        
+        // Q3 Test
+        let intervalId;
+        let intervalCount = 0;
+        function testSetInterval() {
+            const output = document.getElementById('interval-output');
+            output.innerHTML = '';
+            
+            function log(message) {
+                output.innerHTML += message + '<br>';
+            }
+            
+            log('Starting interval (tick every second)...');
+            
+            intervalId = mySetInterval(() => {
+                intervalCount++;
+                log(`Tick ${intervalCount}`);
+                if (intervalCount >= 5) {
+                    stopSetInterval();
+                }
+            }, 1000);
+        }
+        
+        function stopSetInterval() {
+            if (intervalId) {
+                myClearInterval(intervalId);
+                document.getElementById('interval-output').innerHTML += '<br>Interval stopped<br>';
+                intervalCount = 0;
+            }
+        }
+        
+        // Q4 Test
+        async function testTaskRunner() {
+            const output = document.getElementById('task-output');
+            output.innerHTML = 'Running tasks...<br>';
+            
+            function log(message) {
+                output.innerHTML += message + '<br>';
+            }
+            
+            const tasks = [
+                async () => {
+                    log('Task 1: Started');
+                    await new Promise(r => setTimeout(r, 500));
+                    log('Task 1: Completed');
+                    return 'Result 1';
+                },
+                async () => {
+                    log('Task 2: Started');
+                    await new Promise(r => setTimeout(r, 300));
+                    log('Task 2: Completed');
+                    return 'Result 2';
+                },
+                async () => {
+                    log('Task 3: Started');
+                    await new Promise(r => setTimeout(r, 400));
+                    log('Task 3: Completed');
+                    return 'Result 3';
+                }
+            ];
+            
+            try {
+                const results = await runSequential(tasks, 1000);
+                log('All results: ' + JSON.stringify(results));
+            } catch (error) {
+                log('Error: ' + error.message);
+            }
+        }
+        
+        // Q5 Test
+        let countdownTimer;
+        function testCountdown() {
+            const output = document.getElementById('countdown-output');
+            output.innerHTML = '';
+            
+            function log(message) {
+                output.innerHTML += message + '<br>';
+            }
+            
+            log('Starting 10-second countdown...');
+            
+            countdownTimer = createCountdown(
+                10,
+                (remaining) => log(`Tick: ${remaining} seconds remaining`),
+                () => log('COUNTDOWN COMPLETE! 🎉')
+            );
+        }
+        
+        function pauseCountdown() {
+            if (countdownTimer) {
+                countdownTimer.pause();
+                document.getElementById('countdown-output').innerHTML += '⏸️ PAUSED<br>';
+            }
+        }
+        
+        function resumeCountdown() {
+            if (countdownTimer) {
+                countdownTimer.resume();
+                document.getElementById('countdown-output').innerHTML += '▶️ RESUMED<br>';
+            }
+        }
+    </script>
+</body>
+</html>
